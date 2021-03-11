@@ -6,7 +6,7 @@ TOOL_DIRS += smv9-2-publisher
 all:	tools
 
 tools:
-	-for d in $(TOOL_DIRS); do(cd $$d && $(MAKE)); done
+	-for d in $(TOOL_DIRS); do(cd $$d && $(MAKE) static); done
 
 clean:
 	-for d in $(TOOL_DIRS); do(cd $$d && $(MAKE) clean); done

@@ -191,7 +191,7 @@ main(int argc, char *argv[])
 	}
 
 	/* Creates a new mempool in memory to hold the mbufs. */
-	mbuf_pool = rte_pktmbuf_pool_create("MBUF_POOL", NUM_MBUFS * 1,
+	mbuf_pool = rte_pktmbuf_pool_create("MBUF_POOL", NUM_MBUFS * nb_ports,
 		MBUF_CACHE_SIZE, 0, RTE_MBUF_DEFAULT_BUF_SIZE, rte_socket_id());
 
 	if (mbuf_pool == NULL)

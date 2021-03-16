@@ -189,8 +189,8 @@ lcore_main(uint16_t port)
     m->nb_segs = 1;
     m->next = NULL;
     m->data_len = (uint16_t)LEN;
-    eth_hdr = (char *)rte_pktmbuf_prepend(m,m->data_len);
-    memcpy(eth_hdr, buf, LEN);
+    eth_hdr = rte_pktmbuf_append(m,m->data_len);
+    rte_memcpy(eth_hdr, buf, LEN);
 
     uint64_t hz = rte_get_tsc_hz();
     uint64_t ticks_250_us = hz / 4000;
@@ -208,8 +208,8 @@ lcore_main(uint16_t port)
 		m->nb_segs = 1;
 		m->next = NULL;
 		m->data_len = (uint16_t)LEN;
-		eth_hdr = (char *)rte_pktmbuf_prepend(m,m->data_len);
-		memcpy(eth_hdr, buf, LEN);
+		eth_hdr = rte_pktmbuf_append(m,m->data_len);
+		rte_memcpy(eth_hdr, buf, LEN);
 
 		if(unlikely(ret < 1)) {
 			rte_pktmbuf_free(m);

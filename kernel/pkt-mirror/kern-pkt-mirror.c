@@ -151,11 +151,12 @@ int main(int argc, char *argv[]) {
     for (;;) {
         
         nread = recvfrom(sock->rawSocket, buffer, bufferSize, MSG_DONTWAIT, 0, 0);
-        if (nread == -1)
+	//ignore mac address of invalid packets
+        if (nread == -1 || buffer[6] == 0x01 && buffer[7] == 0x02 && buffer[8] == 0x03 && buffer[9] == 0x04 && buffer[10] == 0x05 && buffer[11] == 0x06)
         {
             continue;               /* Ignore failed request */
         }
-	//fprintf(stdout, "P\n");
+	//fprintf(stdout, "m: %d\n",buffer[6]);
        
         if (sendto(sock->rawSocket, buffer, nread, 0, (struct sockaddr*) &(sock->socketAddress), sizeof(sock->socketAddress)) != nread)
         {

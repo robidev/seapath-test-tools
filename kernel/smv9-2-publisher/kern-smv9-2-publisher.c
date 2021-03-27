@@ -105,15 +105,23 @@ static void CalibrateTicks()
 {
   struct timespec begints, endts;
   uint64_t begin = 0, end = 0;
+
+
   clock_gettime(CLOCK_MONOTONIC, &begints);
   begin = RDTSC();
+
   uint64_t i;
   for (i = 0; i < 1000000; i++); /* must be CPU intensive */
+
   end = RDTSC();
   clock_gettime(CLOCK_MONOTONIC, &endts);
+
+
   struct timespec *tmpts = TimeSpecDiff(&endts, &begints);
-  uint64_t nsecElapsed = tmpts->tv_sec * 1000000000LL + tmpts->tv_nsec;
+  uint64_t nsecElapsed = (tmpts->tv_sec * (uint64_t)1000000000LL) + tmpts->tv_nsec;
+  printf("nsecElapsed: %lu, end-begin: %lu\n", nsecElapsed, end - begin);
   g_TicksPerNanoSec = (double)(end - begin)/(double)nsecElapsed;
+  printf("g_TicksPerNanoSec: %f\n", g_TicksPerNanoSec);
 }
  
 /* Call once before using RDTSC, has side effect of binding process to CPU1 */
@@ -261,7 +269,7 @@ int main(int argc, char *argv[]) {
         }
     }
     
-    InitRdtsc(2); // bind to cpu 1
+    InitRdtsc(4); // bind to cpu 1
     fprintf(stdout, "Send packets every 250 us\n");
     
     struct timespec begints;
@@ -275,19 +283,23 @@ int main(int argc, char *argv[]) {
     }
     while(begints.tv_sec <= start);//make this on a absolute second bound
 
-    double g_NextTicksNs = RDTSC() + (g_TicksPerNanoSec * 1000000000); // start after one more second 
+    double g_NextTicksNs = RDTSC() + (g_TicksPerNanoSec * (double)1000000000.0); // start after one more second 
+    int iter = 0;
     while(1) 
     {	
         if(__builtin_expect(g_NextTicksNs < RDTSC(),0))//ensure timing in nanoseconds, and test as much as possible
 	{
+		iter++;
 		if (sendto(sock->rawSocket, buf, nread, 0, (struct sockaddr*) &(sock->socketAddress), sizeof(sock->socketAddress)) != nread)
 		{
 		    fprintf(stderr, "Error sending packet\n");
 		}
-		g_NextTicksNs += (g_TicksPerNanoSec * 1000 * 250);//next 250 us
+		g_NextTicksNs += (g_TicksPerNanoSec * (double)(1000.0 * 250.0));//next 250 us
                 if(g_NextTicksNs < RDTSC())
                 {
-                    fprintf(stderr, "Error: missed deadline\n");
+                    fprintf(stderr, "Error: missed deadline on iter: %i\n", iter);
+		    CalibrateTicks();
+		    g_NextTicksNs = RDTSC() + (g_TicksPerNanoSec * (double)1000000000.0); // start after one more second 
                 }
 	}
     } 

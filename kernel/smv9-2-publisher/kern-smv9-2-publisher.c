@@ -289,7 +289,9 @@ int main(int argc, char *argv[]) {
     {	
         if(__builtin_expect(g_NextTicksNs < RDTSC(),0))//ensure timing in nanoseconds, and test as much as possible
 	{
-		iter++;
+		buf[41] = (iter & 0xff00) >> 8;
+		buf[42] = iter & 0x00ff;
+		iter = (iter + 1) % 4000;
 		if (sendto(sock->rawSocket, buf, nread, 0, (struct sockaddr*) &(sock->socketAddress), sizeof(sock->socketAddress)) != nread)
 		{
 		    fprintf(stderr, "Error sending packet\n");

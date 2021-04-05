@@ -14,7 +14,7 @@ all: shared
 shared: build/$(APP)
 
 
-CFLAGS += #-O3 
+CFLAGS += -O3 
 LDFLAGS +=  
 
 build/$(APP): $(SRCS-y) | build

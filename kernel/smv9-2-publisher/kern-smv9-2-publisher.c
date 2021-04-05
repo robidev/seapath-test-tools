@@ -101,7 +101,9 @@ struct timespec *TimeSpecDiff(struct timespec *ts1, struct timespec *ts2)
 }
  
 double g_TicksPerNanoSec;
-static void CalibrateTicks()
+
+//O3 will optimize out the while loop, causing wrong ticks per second estimate
+static void __attribute__((optimize("O0"))) CalibrateTicks()
 {
   struct timespec begints, endts;
   uint64_t begin = 0, end = 0;

@@ -185,17 +185,25 @@ lcore_main(uint16_t port)
     struct rte_mbuf *m;
 
     m = rte_pktmbuf_alloc(mbuf_pool);
-
+    rte_pktmbuf_reset(m);
     m->nb_segs = 1;
     m->next = NULL;
-    m->data_len = (uint16_t)LEN;
+    //m->data_len = (uint16_t)LEN;
+    //m->pkt_len = (uint16_t)LEN;
+    //eth_hdr = rte_mbuf_to_baddr(m);//
     eth_hdr = rte_pktmbuf_append(m,m->data_len);
     rte_memcpy(eth_hdr, buf, LEN);
+
+    printf("d:%i, p:%i \n", m->data_len, m->pkt_len);
+    m->data_len = (uint16_t)LEN;
+    m->pkt_len = (uint16_t)LEN;
 
     uint64_t hz = rte_get_tsc_hz();
     uint64_t ticks_250_us = hz / 4000;
 
     uint64_t g_NextTicksNs = rte_rdtsc() + (hz * 3); // start after 3 seconds
+
+    uint16_t smpCnt = 0;
 
     while(1)
     {	
@@ -204,12 +212,20 @@ lcore_main(uint16_t port)
 	    	ret = rte_eth_tx_burst(port, 0, &m, 1);
 
 		m = rte_pktmbuf_alloc(mbuf_pool);
-
+                rte_pktmbuf_reset(m);
 		m->nb_segs = 1;
 		m->next = NULL;
-		m->data_len = (uint16_t)LEN;
+
+		//eth_hdr = rte_mbuf_to_baddr(m);//rte_pktmbuf_append(m,m->data_len);
 		eth_hdr = rte_pktmbuf_append(m,m->data_len);
+		m->data_len = (uint16_t)LEN;
+    		m->pkt_len = (uint16_t)LEN;
+
 		rte_memcpy(eth_hdr, buf, LEN);
+
+		smpCnt = ( smpCnt + 1 ) % 4000;
+		eth_hdr[41] = smpCnt / 256;
+		eth_hdr[42] = smpCnt % 256;
 
 		if(unlikely(ret < 1)) {
 			rte_pktmbuf_free(m);

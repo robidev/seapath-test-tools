@@ -19,6 +19,7 @@
 #include <linux/if_arp.h>
 #include <arpa/inet.h>
 #include <time.h>  /* for struct timespec */
+#include <math.h>
 
 #define BUF_SIZE 1500
 
@@ -27,6 +28,8 @@
 #endif
 
 #define LEN 128
+
+int32_t sinbuf[4000];
 
 uint8_t buf[LEN] = { //                       start-addr
 0x01, 0x0c, 0xcd, 0x01, 0x00, 0x03,//dest     0
@@ -245,6 +248,14 @@ int main(int argc, char *argv[]) {
 
     int nread = LEN;
 
+    for(int id = 0; id < 4000; id++) {
+        float rad = (2 * M_PI) / 4000;
+        int32_t val = (int)(sin( rad * id ) * 10000);
+        sinbuf[id] = ntohl(val);
+    }
+
+
+
     if (argc != 2) {
         fprintf(stderr, "Usage: %s [interface]\n", argv[0]);
         exit(EXIT_FAILURE);
@@ -287,6 +298,8 @@ int main(int argc, char *argv[]) {
 
     double g_NextTicksNs = RDTSC() + (g_TicksPerNanoSec * (double)1000000000.0); // start after one more second 
     int iter = 0;
+
+    int rr = rand() % 4000;
     while(1) 
     {	
         if(__builtin_expect(g_NextTicksNs < RDTSC(),0))//ensure timing in nanoseconds, and test as much as possible
@@ -294,9 +307,21 @@ int main(int argc, char *argv[]) {
 		buf[41] = (iter & 0xff00) >> 8;
 		buf[42] = iter & 0x00ff;
 		iter = (iter + 1) % 4000;
-		if (sendto(sock->rawSocket, buf, nread, 0, (struct sockaddr*) &(sock->socketAddress), sizeof(sock->socketAddress)) != nread)
+
+
+		uint32_t * addr2 = (uint32_t *)&buf[64];
+		*addr2 = sinbuf[iter];//htonl(sinbuf[iter]/(xx + 1));
+		addr2 = (uint32_t *)&buf[72];
+		*addr2 = sinbuf[(iter + 1333)%4000];//htonl(sinbuf[(iter + 1333)%4000]/(xx + 1));
+		addr2 = (uint32_t *)&buf[80];
+		*addr2 = sinbuf[(iter + 2666)%4000];//htonl(sinbuf[(iter + 2666)%4000]/(xx + 1));
+
+		//if(iter == rr){   rr = rand() % 4000; }	else
 		{
-		    fprintf(stderr, "Error sending packet\n");
+			if (sendto(sock->rawSocket, buf, nread, 0, (struct sockaddr*) &(sock->socketAddress), sizeof(sock->socketAddress)) != nread)
+			{
+			    fprintf(stderr, "Error sending packet\n");
+			}
 		}
 		g_NextTicksNs += (g_TicksPerNanoSec * (double)(1000.0 * 250.0));//next 250 us
                 if(g_NextTicksNs < RDTSC())

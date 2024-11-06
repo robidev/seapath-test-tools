@@ -27,6 +27,7 @@ test_big_endian(PLATFORM_IS_BIGENDIAN)
 set(open_server_SRCS  kern-smv9-2-publisher.c)
 
 add_executable(${APP} ${open_server_SRCS})
+target_link_libraries(${APP} m)
 
 install ( TARGETS ${APP} DESTINATION bin)
 
